@@ -145,3 +145,4 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+src/SampleWebApplication/appsettings.Development.json

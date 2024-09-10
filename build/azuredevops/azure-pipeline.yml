@@ -3,7 +3,7 @@ name: DevOps done right Sample Pipeline
 trigger:
   branches:
     include:
-      - master
+      - main
     
   paths:
     exclude:

@@ -1,7 +1,28 @@
+using SampleWebApplication.Services;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
+
+var appSettings = builder.Configuration;
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddDbContext<SampleDbContext>(options =>
+{
+    string? appEnv = appSettings["ApplicationEnvironment"];
+    
+    if (appEnv != null && appEnv.ToLower() == "local")
+    {
+        options.UseInMemoryDatabase("devOpsDoneRightDb");    
+    }
+    else
+    {
+        options.UseSqlServer(appSettings["SqlServerConnection"]);
+    }
+});
+
+builder.Services.AddScoped<ISampleRepository, SampleRepository>();
 
 var app = builder.Build();
 

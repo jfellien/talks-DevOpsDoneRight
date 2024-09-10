@@ -1,21 +1,20 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SampleWebApplication.Models;
+using SampleWebApplication.Services;
 
 namespace SampleWebApplication.Controllers;
 
-public class HomeController : Controller
+public class HomeController(
+    ISampleRepository sampleRepository,
+    ILogger<HomeController> logger) : Controller
 {
-    private readonly ILogger<HomeController> _logger;
-
-    public HomeController(ILogger<HomeController> logger)
-    {
-        _logger = logger;
-    }
-
+    
     public IActionResult Index()
     {
-        return View();
+        string environment = sampleRepository.GetEnvironment();
+        
+        return View(new IndexViewModel{ Environment = environment });
     }
 
     public IActionResult Privacy()

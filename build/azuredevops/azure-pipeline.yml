@@ -97,7 +97,7 @@ stages:
           - script: dotnet tool install --global dotnet-ef
             displayName: Install EF Tools
 
-          - script: dotnet ef migrations script --idempotent --project ${{ variables.WEBAPP_PROJECT_FILEPATH }} --output ${{ variables.WEBAPP_DATABSE_MIGRATION_SCRIPT }}
+          - script: dotnet ef migrations script --idempotent --project ${{ variables.WEBAPP_PROJECT_FILEPATH }} --output ${{ variables.WEBAPP_DATABSE_MIGRATION_SCRIPT }} --configuration ${{ variables.BUILD_TYPE }}
             displayName: Generate SQL DB Migration Script
             
           - script: dotnet build ${{ variables.SOLUTION_FILE }} --configuration ${{ variables.BUILD_TYPE }} --no-restore

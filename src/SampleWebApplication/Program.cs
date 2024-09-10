@@ -10,16 +10,11 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<SampleDbContext>(options =>
 {
-    string? appEnv = appSettings["ApplicationEnvironment"];
-    
-    if (appEnv != null && appEnv.ToLower() == "local")
-    {
-        options.UseInMemoryDatabase("devOpsDoneRightDb");    
-    }
-    else
-    {
-        options.UseSqlServer(appSettings["SqlServerConnection"]);
-    }
+#if DEBUG
+    options.UseInMemoryDatabase("SampleDb");
+#else
+    options.UseSqlServer(appSettings["SqlServerConnection"]);
+#endif
 });
 
 builder.Services.AddScoped<ISampleRepository, SampleRepository>();

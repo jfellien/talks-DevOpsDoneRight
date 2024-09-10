@@ -25,6 +25,8 @@ variables:
   - name: ARTIFACT_BICEP_DROP_NAME
     value: drop-bicep
 
+  - name: SOLUTION_FILE
+    value: src/DevOpsDoneRightSample.sln
   - name: WEBAPP_PROJECT_FILEPATH
     value: src/SampleWebApplication/SampleWebApplication.csproj
   - name: WEBAPP_PUBLISH_FOLDER
@@ -53,7 +55,6 @@ stages:
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
       DOTNET_VERSION: '8.0.x'
       DOTNET_RUNTIMES: linux-x64
-      SOLUTION_FILE: DevOpsDoneRightSample.sln
       BUILD_TYPE: Release
     jobs:
       - job: buildInfra

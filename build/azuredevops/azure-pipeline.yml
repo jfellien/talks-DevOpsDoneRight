@@ -83,7 +83,7 @@ stages:
               version: ${{ variables.DOTNET_VERSION }}
               installationPath: $(Agent.ToolsDirectory)/dotnet
           
-          - script: dotnet restore ${{ variables.SOLUTION_FILE }} --configfile NuGet.config
+          - script: dotnet restore ${{ variables.WEBAPP_PROJECT_FILEPATH }} --configfile NuGet.config
             displayName: .NET Package Restore
 
           - script: dotnet tool restore

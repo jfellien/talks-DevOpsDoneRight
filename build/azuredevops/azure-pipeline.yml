@@ -13,7 +13,7 @@ trigger:
       - .gitattributes
       - docs/**/*
 
-      
+
 variables:
   - name: AZD_ISBRANCH_MAIN
     value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
@@ -86,7 +86,7 @@ stages:
           - script: dotnet restore --configfile NuGet.config
             displayName: .NET Package Restore
 
-          - script: dotnet tool restore
+          - script: dotnet tool restore ${{ variables.SOLUTION_FILE }}
             displayName: .NET Tool Restore
           
           - script: dotnet tool install --global dotnet-ef

@@ -10,11 +10,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<SampleDbContext>(options =>
 {
-#if DEBUG
-    options.UseInMemoryDatabase("SampleDb");
-#else
     options.UseSqlServer(appSettings["SqlServerConnection"]);
-#endif
 });
 
 builder.Services.AddScoped<ISampleRepository, SampleRepository>();

@@ -83,10 +83,10 @@ stages:
               version: ${{ variables.DOTNET_VERSION }}
               installationPath: $(Agent.ToolsDirectory)/dotnet
           
-          - script: dotnet restore --configfile NuGet.config
+          - script: dotnet restore ${{ variables.SOLUTION_FILE }} --configfile NuGet.config
             displayName: .NET Package Restore
 
-          - script: dotnet tool restore ${{ variables.SOLUTION_FILE }}
+          - script: dotnet tool restore
             displayName: .NET Tool Restore
           
           - script: dotnet tool install --global dotnet-ef

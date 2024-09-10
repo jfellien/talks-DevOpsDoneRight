@@ -1,0 +1,128 @@
+name: DevOps done right Sample Pipeline
+
+trigger:
+  branches:
+    include:
+      - master
+    
+  paths:
+    exclude:
+      - README.md
+      - LICENSE
+      - .gitignore
+      - .gitattributes
+      - docs/**/*
+
+      
+variables:
+  - name: AZD_ISBRANCH_MAIN
+    value: $[eq(variables['Build.SourceBranch'], 'refs/heads/main')]
+  - name: BICEP_SOURCE_FOLDER
+    value: build/bicep
+  - name: BICEP_FILE
+    value: solution.bicep
+  - name: ARTIFACT_BICEP_DROP_NAME
+    value: drop-bicep
+  - name: WEBAPP_PROJECT_FILEPATH
+    value: src/SampleWebApplication/SampleWebApplication.csproj
+  - name: WEBAPP_PUBLISH_FOLDER
+    value: $(Build.ArtifactStagingDirectory)/web-app/
+  - name: WEBAPP_PACKAGE_FOLDER
+    value: $(Build.ArtifactStagingDirectory)/web-app-packaged/
+  - name: WEBAPP_DATABSE_MIGRATION_SCRIPT
+    value: $(Build.ArtifactStagingDirectory)/migration.sql
+  - name: WEBAPP_PACKAGE_NAME
+    value: web-app.zip
+  - name: ARTIFACT_WEB_APP_DROP_NAME
+    value: drop-web-app
+  - name: ARTIFACT_MIGRATION_SCRIPT_DROP_NAME
+    value: drop-migration-script
+
+
+stages:
+  - stage: build
+    displayName: Build
+    pool:
+      vmImage: ubuntu-latest
+    variables:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+      DOTNET_VERSION: '8.0.x'
+      DOTNET_RUNTIMES: linux-x64
+      SOLUTION_FILE: DevOpsDoneRightSample.sln
+      BUILD_TYPE: Release
+    jobs:
+      - job: buildInfra
+        displayName: Build Infrastructure
+        timeoutInMinutes: 15
+        steps:
+          - checkout: self
+            clean: true
+            fetchDepth: 0
+
+          - script: az bicep build --file ./${{ variables.BICEP_SOURCE_FOLDER }}/${{ variables.BICEP_FILE }}
+            displayName: 'Build Bicep'
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: ${{ variables.BICEP_SOURCE_FOLDER }}
+              ArtifactName: ${{ variables.ARTIFACT_BICEP_DROP_NAME }}
+              publishLocation: 'Container'
+
+      - job: buildWebApp
+        displayName: Build Web Application
+        timeoutInMinutes: 15
+        steps:
+          - checkout: self
+            clean: true
+            fetchDepth: 0
+
+          - task: UseDotNet@2
+            displayName: Install .NET Core SDK
+            inputs:
+              packageType: sdk
+              version: ${{ variables.DOTNET_VERSION }}
+              installationPath: $(Agent.ToolsDirectory)/dotnet
+          
+          - script: dotnet restore --configfile NuGet.config
+            displayName: .NET Package Restore
+
+          - script: dotnet tool restore
+            displayName: .NET Tool Restore
+          
+          - script: dotnet tool install --global dotnet-ef
+            displayName: Install EF Tools
+
+          - script: dotnet tool run nbgv cloud -ca
+            displayName: Build Git Version
+
+          - script: dotnet ef migrations script --idempotent --project ${{ variables.WEBAPP_PROJECT_FILEPATH }} --output ${{ variables.WEBAPP_DATABSE_MIGRATION_SCRIPT }}
+            displayName: Generate SQL DB Migration Script
+            
+          - script: dotnet build ${{ variables.SOLUTION_FILE }} --configuration ${{ variables.BUILD_TYPE }} --no-restore /p:Version=$(NBGV_SemVer2)
+            displayName: Build Web Application
+          
+          - script: dotnet publish ${{ variables.WEBAPP_PROJECT_FILEPATH }} --configuration ${{ variables.BUILD_TYPE }} --no-restore -o ${{ variables.WEBAPP_PUBLISH_FOLDER }} --self-contained --runtime ${{ variables.DOTNET_RUNTIMES}}
+            displayName: Publish Web Application
+
+          - task: PowerShell@2
+            displayName: ZIP Published Web Application
+            inputs:
+              targetType: 'inline'
+              script: |
+                New-Item -ItemType Directory -Force -Path ${{ variables.WEBAPP_PACKAGE_FOLDER }}
+                Set-Location -Path ${{ variables.WEBAPP_PUBLISH_FOLDER }}
+                Compress-Archive * -DestinationPath ${{ variables.WEBAPP_PACKAGE_FOLDER }}${{ variables.WEBAPP_PACKAGE_NAME }}
+            
+          - task: PublishBuildArtifacts@1
+            displayName: Publish Web Application Artifacts
+            inputs:
+              PathtoPublish: ${{ variables.WEBAPP_PUBLISH_FOLDER }}
+              ArtifactName: ${{ variables.ARTIFACT_WEB_APP_DROP_NAME }}
+              publishLocation: Container
+
+          - task: PublishBuildArtifacts@1
+            displayName: Publish SQL Migration Script
+            inputs:
+              PathtoPublish: ${{ variables.WEBAPP_DATABSE_MIGRATION_SCRIPT }}
+              ArtifactName: ${{ variables.ARTIFACT_MIGRATION_SCRIPT_DROP_NAME }}
+              publishLocation: Container

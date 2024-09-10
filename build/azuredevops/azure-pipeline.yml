@@ -41,7 +41,7 @@ variables:
     value: drop-migration-script
 
   - name: NUGET_CONFIG_FILEPATH
-    value: src/Nuget.config
+    value: src/NuGet.config
 
 
 stages:

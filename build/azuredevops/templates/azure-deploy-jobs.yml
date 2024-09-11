@@ -141,7 +141,7 @@ jobs:
             inputs:
               azureSubscription: ${{ parameters.azConnectionName }}
               appType: webAppLinux
-              appName: ${{ parameters.appName }}
+              appName: app-${{ parameters.appName }}-${{ parameters.appDeploymentEnv }}
               resourceGroupName: ${{ parameters.appDeploymentResourceGroup }}
               package: ${{ parameters.webAppPackageFilePath }}
               deploymentMethod: 'runFromPackage'

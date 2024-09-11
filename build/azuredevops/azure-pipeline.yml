@@ -129,3 +129,29 @@ stages:
               PathtoPublish: ${{ variables.WEBAPP_DATABSE_MIGRATION_SCRIPT }}
               ArtifactName: ${{ variables.ARTIFACT_MIGRATION_SCRIPT_DROP_NAME }}
               publishLocation: Container
+
+  - stage: deployOnDev
+    displayName: Deploy on Development Environment
+    dependsOn: build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    variables:
+      - group: dodr-variables-dev
+
+    jobs:
+      - template: ./templates/azure-deploy-jobs.yml
+        parameters:
+          deploymentName: deployOnDev
+          deploymentTitle: Deploy on Development Environment
+          azdEnvName: development
+          azConnectionName: dodr-service-connection-dev
+          bicepFile: $(Pipeline.Workspace)/${{ variables.ARTIFACT_BICEP_DROP_NAME }}/$(BICEP_FILE)
+          webAppPackageFilePath: $(Pipeline.Workspace)/${{ variables.ARTIFACT_WEB_APP_DROP_NAME }}/${{ variables.WEBAPP_PACKAGE_NAME }}
+          migrationScriptFilePath: $(Pipeline.Workspace)/${{ variables.ARTIFACT_MIGRATION_SCRIPT_DROP_NAME }}/migration.sql
+          appName: $(appName) # This is a variable defined in the variable group dodr-variables-dev
+          appDeploymentEnv: $(env) # This is a variable defined in the variable group dodr-variables-dev
+          appDeploymentLocation: $(location) # This is a variable defined in the variable group dodr-variables-dev
+          appDeploymentResourceGroup: $(resourceGroupName) # This is a variable defined in the variable group dodr-variables-dev
+          appSqlDatabaseName: $(sqlDatabaseName) # This is a variable defined in the variable group dodr-variables-dev
+          appSqlAdminUser: $(sqlAdminUser) # This is a variable defined in the variable group dodr-variables-dev
+          appSqlAdminPassword: $(sqlAdminPassword) # This is a variable defined in the variable group dodr-variables-dev
+          

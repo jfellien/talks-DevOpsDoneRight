@@ -1,0 +1,137 @@
+parameters:
+  - name: deploymentName
+    type: string
+  - name: deploymentTitle
+    type: string
+  - name: azdEnvName
+    type: string
+  - name: azConnectionName
+    type: string
+  - name: bicepFile
+    type: string
+  - name: webAppPackageFilePath
+    type: string
+  - name: migrationScriptFilePath
+    type: string
+  - name: appName
+    type: string
+  - name: appDeploymentEnv
+    type: string
+  - name: appDeploymentLocation
+    type: string
+  - name: appDeploymentResourceGroup
+    type: string
+  - name: appSqlDatabaseName
+    type: string
+  - name: appSqlAdminUser
+    type: string
+  - name: appSqlAdminPassword
+    type: string
+
+jobs:
+- deployment: ${{ parameters.deploymentName }}Infrastructure
+  displayName: ${{ parameters.deploymentTitle }} Infrastructure
+  environment: ${{ parameters.azdEnvName }}
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  workspace:
+    clean: all
+
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+          - download: current
+            displayName: Download artifacts
+
+          - task: AzureCLI@2
+            displayName: Deploy Infrastructure
+            inputs:
+              azureSubscription: ${{ parameters.azConnectionName }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az deployment sub create \
+                  --template-file ${{ parameters.bicepFile }} \
+                  --location ${{ parameters.appDeploymentLocation }} \
+                  --parameters \
+                    env=${{ parameters.appDeploymentEnv }} \
+                    resourceGroupName=${{ parameters.appDeploymentResourceGroup }} \
+                    name=${{ parameters.appName }} \
+                    sqlDatabaseName=${{ parameters.appSqlDatabaseName }} \
+                    sqlAdministratorUserName=${{ parameters.appSqlAdminUser }} \
+                    sqlAdministratorPassword=${{ parameters.appSqlAdminPassword }}
+
+          - task: AzureCLI@2
+            displayName: Wait 
+            inputs:
+              azureSubscription: ${{ parameters.azConnectionName }}
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                Start-Sleep -Seconds 60
+
+- deployment: ${{ parameters.deploymentName }}Migration
+  displayName: ${{ parameters.deploymentTitle }} Migration
+  environment: ${{ parameters.azdEnvName }}
+
+  dependOn: 
+    - ${{ parameters.deploymentName }}Infrastructure
+
+  pool:
+    vmImage: 'windows-latest'
+
+  workspace:
+    clean: all
+
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+          - download: current
+            displayName: Download artifacts
+
+          - task: SqlAzureDacpacDeployment@1
+            displayName: 'Update Database'
+            inputs:
+              azureSubscription: ${{ parameters.azConnectionName }}
+              AuthenticationType: server
+              ServerName: sql-${{ parameters.appName }}-${{ parameters.appDeploymentEnv }}.database.windows.net
+              DatabaseName: ${{ parameters.appSqlDatabaseName }}
+              SqlUsername: ${{ parameters.appSqlAdminUser }}
+              SqlPassword: ${{ parameters.appSqlAdminPassword }}
+              deployType: 'SqlTask'
+              SqlFile: ${{ parameters.migrationScriptFilePath }}
+
+- deployment: ${{ parameters.deploymentName }}WebApp
+  displayName: ${{ parameters.deploymentTitle }} WebApp
+  environment: ${{ parameters.azdEnvName }}
+
+  dependOn: 
+    - ${{ parameters.deploymentName }}Infrastructure
+    - ${{ parameters.deploymentName }}Migration
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  workspace:
+    clean: all
+
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+          - download: current
+            displayName: Download artifacts
+
+          - task: AzureWebApp@1
+            displayName: Deploy Web App
+            inputs:
+              azureSubscription: ${{ parameters.azConnectionName }}
+              appType: webAppLinux
+              appName: ${{ parameters.appName }}
+              resourceGroupName: ${{ parameters.appDeploymentResourceGroup }}
+              package: ${{ parameters.webAppPackageFilePath }}
+              deploymentMethod: 'runFromPackage'

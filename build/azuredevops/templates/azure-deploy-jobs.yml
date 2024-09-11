@@ -7,6 +7,12 @@ parameters:
     type: string
   - name: azConnectionName
     type: string
+  - name: artifactBicepName
+    type: string
+  - name: artifactWebAppName
+    type: string
+  - name: artifactMigrationName
+    type: string
   - name: bicepFile
     type: string
   - name: webAppPackageFilePath
@@ -44,6 +50,7 @@ jobs:
       deploy:
         steps:
           - download: current
+            artifact: ${{ parameters.artifactBicepName }}
             displayName: Download artifacts
 
           - task: AzureCLI@2
@@ -91,7 +98,9 @@ jobs:
       deploy:
         steps:
           - download: current
+            artifact: ${{ parameters.artifactMigrationName }}
             displayName: Download artifacts
+
 
           - task: SqlAzureDacpacDeployment@1
             displayName: 'Update Database'
@@ -124,6 +133,7 @@ jobs:
       deploy:
         steps:
           - download: current
+            artifact: ${{ parameters.artifactWebAppName }}
             displayName: Download artifacts
 
           - task: AzureWebApp@1

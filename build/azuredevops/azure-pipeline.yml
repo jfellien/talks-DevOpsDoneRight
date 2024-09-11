@@ -144,6 +144,9 @@ stages:
           deploymentTitle: Deploy on Development Environment
           azdEnvName: development
           azConnectionName: dodr-service-connection-dev
+          artifactBicepName: ${{ variables.ARTIFACT_BICEP_DROP_NAME }}
+          artifactWebAppName: ${{ variables.ARTIFACT_WEB_APP_DROP_NAME }}
+          artifactMigrationName: ${{ variables.ARTIFACT_MIGRATION_SCRIPT_DROP_NAME }}
           bicepFile: $(Pipeline.Workspace)/${{ variables.ARTIFACT_BICEP_DROP_NAME }}/$(BICEP_FILE)
           webAppPackageFilePath: $(Pipeline.Workspace)/${{ variables.ARTIFACT_WEB_APP_DROP_NAME }}/${{ variables.WEBAPP_PACKAGE_NAME }}
           migrationScriptFilePath: $(Pipeline.Workspace)/${{ variables.ARTIFACT_MIGRATION_SCRIPT_DROP_NAME }}/migration.sql
@@ -154,4 +157,3 @@ stages:
           appSqlDatabaseName: $(sqlDatabaseName) # This is a variable defined in the variable group dodr-variables-dev
           appSqlAdminUser: $(sqlAdminUser) # This is a variable defined in the variable group dodr-variables-dev
           appSqlAdminPassword: $(sqlAdminPassword) # This is a variable defined in the variable group dodr-variables-dev
-          

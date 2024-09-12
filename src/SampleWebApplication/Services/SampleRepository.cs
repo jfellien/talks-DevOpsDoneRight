@@ -14,4 +14,14 @@ internal class SampleRepository(
             ? "Unknown" 
             : environmentSetting.Value;
     }
+
+    public string GetEnvironmentVersion()
+    {
+        ApplicationConfiguration? environmentSetting = dbContext.ApplicationConfigurations
+            .SingleOrDefault(x => x.Name == "Environment");
+
+        return environmentSetting is null 
+            ? "0.0" 
+            : environmentSetting.Version;
+    }
 }

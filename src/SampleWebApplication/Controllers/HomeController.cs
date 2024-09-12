@@ -13,8 +13,13 @@ public class HomeController(
     public IActionResult Index()
     {
         string environment = sampleRepository.GetEnvironment();
+        string environmentVersion = sampleRepository.GetEnvironmentVersion();
         
-        return View(new IndexViewModel{ Environment = environment });
+        return View(new IndexViewModel
+        {
+            Environment = environment, 
+            EnvironmentVersion = environmentVersion
+        });
     }
 
     public IActionResult Privacy()

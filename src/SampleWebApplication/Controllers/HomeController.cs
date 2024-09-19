@@ -14,11 +14,13 @@ public class HomeController(
     {
         string environment = sampleRepository.GetEnvironment();
         string environmentVersion = sampleRepository.GetEnvironmentVersion();
+        string location = sampleRepository.GetLocation();
         
         return View(new IndexViewModel
         {
             Environment = environment, 
-            EnvironmentVersion = environmentVersion
+            EnvironmentVersion = environmentVersion,
+            Location = location
         });
     }
 
